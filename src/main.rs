@@ -49,7 +49,7 @@ fn print_grid(grid: &Vec<i32>) {
     for i in 0..grid.len() {
         if i % 9 == 0 {
             println!();
-            print!("{} ", (i % 9));
+            print!("{} ", (i / 9));
         }
         if grid[i] == -1 {
             print!("| ");
@@ -99,33 +99,39 @@ fn init_grid(mode: u8) -> Vec<i32> {
     while mines != 0 {
         let tmpx: i32 = rng.gen_range(0..x);
         let tmpy: i32 = rng.gen_range(0..y);
-        if grid[(tmpy as usize)* (x as usize) + (tmpx as usize)] != -1 {
-            grid[tmpy as usize * x as usize + tmpx as usize] = -1;
+        if grid[(tmpy * x + tmpx) as usize] != -1 {
+            grid[(tmpy * x + tmpx) as usize] = -1;
             mines -= 1;
-            
-            if (tmpy - 1) * x + (tmpx - 1) > 0 && (tmpy - 1) * x + (tmpx - 1) < grid.len() as i32 {
-                grid[((tmpy - 1) as usize * x as usize) + (tmpx - 1) as usize] += 1;
+
+            if tmpy - 1 >= 0 {
+                if tmpx - 1 >= 0 && grid[((tmpy - 1) * x + tmpx - 1) as usize] != -1 {
+                    grid[((tmpy - 1) * x + tmpx - 1) as usize] += 1;
+                }
+                if grid[((tmpy - 1) * x + tmpx) as usize] >= 0 {
+                    grid[((tmpy - 1) * x + tmpx) as usize] += 1;
+                }
+                if tmpx + 1 < x && grid[((tmpy - 1) * x + tmpx + 1) as usize] != -1 {
+                    grid[((tmpy - 1) * x + tmpx + 1) as usize] += 1;
+                }
             }
-            if ((tmpy - 1) * x) + tmpx > 0 && ((tmpy - 1) * x) + tmpx < grid.len() as i32 {
-                grid[((tmpy - 1) as usize * x as usize) + tmpx as usize] += 1;
+
+            if tmpx - 1 >= 0 && grid[(tmpy * x + tmpx - 1) as usize] != -1 {
+                grid[(tmpy * x + tmpx - 1) as usize] += 1;
             }
-            if (tmpy - 1) * x + (tmpx + 1) > 0 && (tmpy - 1) * x + (tmpx + 1) < grid.len() as i32 {
-                grid[((tmpy - 1) as usize * x as usize) + (tmpx + 1) as usize] += 1;
+            if tmpx + 1 < x && grid[(tmpy * x + tmpx + 1) as usize] != -1 {
+                grid[(tmpy * x + tmpx + 1) as usize] += 1;
             }
-            if tmpy * x + (tmpx - 1) > 0 && tmpy * x + (tmpx - 1) < grid.len() as i32 {
-                grid[(tmpy * x) as usize + (tmpx - 1) as usize] += 1;
-            }
-            if tmpy * x + (tmpx + 1) > 0 && tmpy * x + (tmpx + 1) < grid.len() as i32 {
-                grid[(tmpy * x) as usize + (tmpx + 1) as usize] += 1;
-            }
-            if (tmpy + 1) * x + (tmpx - 1) > 0 && (tmpy + 1) * x + (tmpx - 1) < grid.len() as i32 {
-                grid[((tmpy + 1) as usize * x as usize) + (tmpx - 1) as usize] += 1;
-            }
-            if ((tmpy + 1) * x) + tmpx > 0 && ((tmpy + 1) * x) + tmpx < grid.len() as i32 {
-                grid[((tmpy + 1) as usize * x as usize) + tmpx as usize] += 1;
-            }
-            if (tmpy + 1) * x + (tmpx + 1) > 0 && (tmpy + 1) * x + (tmpx + 1) < grid.len() as i32 {
-                grid[((tmpy + 1) as usize * x as usize) + (tmpx + 1) as usize] += 1;
+
+            if tmpy + 1 < y {
+                if tmpx - 1 >= 0 && grid[((tmpy + 1) * x + tmpx - 1) as usize] != -1 {
+                    grid[((tmpy + 1) * x + tmpx - 1) as usize] += 1;
+                }
+                if grid[((tmpy + 1) * x + tmpx) as usize] != -1 {
+                    grid[((tmpy + 1) * x + tmpx) as usize] += 1;
+                }
+                if tmpx + 1 < x && grid[((tmpy + 1) * x + tmpx + 1) as usize] != -1 {
+                    grid[((tmpy + 1) * x + tmpx + 1) as usize] += 1;
+                }
             }
         }
     }
