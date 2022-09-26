@@ -23,6 +23,14 @@ Choose a difficulty:
     );
 
     let mut info: FieldInfo = init_grid(get_difficulty() as u8);
+
+    println!("
+Instruction to play:
+  f - flag/unflag a cell
+  v - view a cell
+followed by y,x. For example f3,1 or c4,8 are valid command.
+    ");
+
     let are_ya_winning_son = game_loop(&mut info);
 
     if are_ya_winning_son {
@@ -185,7 +193,7 @@ fn game_loop(info: &mut FieldInfo) -> bool {
         let y = user_input.chars().nth(1).unwrap().to_digit(10).unwrap() as i32;
         let x = user_input.chars().nth(3).unwrap().to_digit(10).unwrap() as i32;
 
-        if command == 'c' {
+        if command == 'v' {
             info.visible[(y * info.y + x) as usize] = true;
         }
         if command == 'f' {
