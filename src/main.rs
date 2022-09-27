@@ -31,7 +31,7 @@ Choose a difficulty:
 Instruction to play:
   f - flag/unflag a cell
   v - view a cell
-followed by y,x. For example f3,1 or c4,8 are valid command.
+followed by y,x. For example f3,1 or v4,8 are valid command.
     "
     );
 
@@ -56,22 +56,23 @@ fn get_difficulty() -> i8 {
 }
 
 fn print_grid(info: &FieldInfo) {
-    print!("\n  ");
+    print!("\n   ");
     // print first row of numbers
     for i in 0..info.x {
-        if info.x > 9 && i as i32 / info.y <= 9 {
-            print!(" {}", i);
-        } else {
+        if i > 9 {
             print!("{} ", i);
+        } else {
+            print!(" {} ", i);
         }
     }
+
     for i in 0..info.field.len() {
         // print column number
         if i as i32 % info.x == 0 {
-            if info.x > 9 && i as i32 / info.y <= 9 {
-                print!("\n{}  ", i as i32 / info.y);
+            if i as i32 / info.x <= 9 {
+                print!("\n{}  ", i as i32 / info.x);
             } else {
-                print!("\n{} ", i as i32 / info.y);
+                print!("\n{} ", i as i32 / info.x);
             }
         }
 
@@ -79,9 +80,9 @@ fn print_grid(info: &FieldInfo) {
         if info.visible[i] {
             print_number(info.field[i]);
         } else if info.flagged[i] {
-            print!("{} ", "f".red());
+            print!(" {} ", "F".red());
         } else {
-            print!("{}", "  ".on_truecolor(164, 164, 164)); // print gray bg
+            print!("{}", "   ".on_truecolor(164, 164, 164)); // print gray bg
         }
     }
     println!("\n");
@@ -90,16 +91,16 @@ fn print_grid(info: &FieldInfo) {
 // print bomb or number with colors
 fn print_number(num: i32) {
     match num {
-        -1 => print!("{} ", "o".bright_red()),
-        0 => print!("  "),
-        1 => print!("{} ", "1".blue()),
-        2 => print!("{} ", "2".green()),
-        3 => print!("{} ", "3".red()),
-        4 => print!("{} ", "4".color("yellow")),
-        5 => print!("{} ", "5".color("brown")),
-        6 => print!("{} ", "6".color("cyan")),
-        7 => print!("{} ", "7".bright_magenta()),
-        8 => print!("{} ", "8".purple()),
+        -1 => print!(" {} ", "o".bright_red()),
+        0 => print!("   "),
+        1 => print!(" {} ", "1".blue()),
+        2 => print!(" {} ", "2".green()),
+        3 => print!(" {} ", "3".red()),
+        4 => print!(" {} ", "4".color("yellow")),
+        5 => print!(" {} ", "5".color("brown")),
+        6 => print!(" {} ", "6".color("cyan")),
+        7 => print!(" {} ", "7".bright_magenta()),
+        8 => print!(" {} ", "8".purple()),
         _ => print!("Errore in print_number"),
     };
 }
@@ -221,17 +222,17 @@ fn game_loop(info: &mut FieldInfo) -> bool {
                 .map(|x| x.trim().parse().map_err(|e: ParseIntError| eyre!(e)))
                 .collect();
             if let Ok(c) = tmp {
-                coords = c;
-                is_correct = true;
+                if c[0] < info.y && c[1] < info.x {
+                    coords = c;
+                    is_correct = true;
+                }
             }
         }
 
         let y = coords[0];
         let x = coords[1];
 
-        let i = (y * info.y + x) as usize;
-
-        print!("{}", command);
+        let i = (y * info.x + x) as usize;
 
         // elaborate command
         if command == "v" {
@@ -269,7 +270,7 @@ fn game_loop(info: &mut FieldInfo) -> bool {
 }
 
 fn view_blanck_cell(info: &mut FieldInfo, x: i32, y: i32) {
-    let i = (y * info.y + x) as usize;
+    let i = (y * info.x + x) as usize;
     info.visible[i] = true;
     if info.field[i] == 0 {
         if x + 1 < info.x {
