@@ -24,12 +24,14 @@ Choose a difficulty:
 
     let mut info: FieldInfo = init_grid(get_difficulty() as u8);
 
-    println!("
+    println!(
+        "
 Instruction to play:
   f - flag/unflag a cell
   v - view a cell
 followed by y,x. For example f3,1 or c4,8 are valid command.
-    ");
+    "
+    );
 
     let are_ya_winning_son = game_loop(&mut info);
 
@@ -55,12 +57,20 @@ fn print_grid(info: &FieldInfo) {
     print!("\n  ");
     // print first row of numbers
     for i in 0..info.x {
-        print!("{} ", i);
+        if info.x > 9 && i as i32 / info.y <= 9 {
+            print!(" {}", i);
+        } else {
+            print!("{} ", i);
+        }
     }
     for i in 0..info.field.len() {
         // print column number
         if i as i32 % info.x == 0 {
-            print!("\n{} ", i as i32 / info.y);
+            if info.x > 9 && i as i32 / info.y <= 9 {
+                print!("\n{}  ", i as i32 / info.y);
+            } else {
+                print!("\n{} ", i as i32 / info.y);
+            }
         }
 
         // print cell
@@ -88,7 +98,6 @@ fn print_number(num: i32) {
         6 => print!("{} ", "6".color("cyan")),
         7 => print!("{} ", "7".bright_magenta()),
         8 => print!("{} ", "8".purple()),
-        9 => print!("{} ", "8".bright_green()),
         _ => print!("Errore in print_number"),
     };
 }
@@ -144,7 +153,7 @@ fn init_grid(mode: u8) -> FieldInfo {
             field[(tmpy * x + tmpx) as usize] = -1;
             c -= 1;
 
-            // add 1 around the mine selected
+            // add 1 to the cells around the mine selected
             if tmpy - 1 >= 0 {
                 if tmpx - 1 >= 0 && field[((tmpy - 1) * x + tmpx - 1) as usize] != -1 {
                     field[((tmpy - 1) * x + tmpx - 1) as usize] += 1;
@@ -178,7 +187,14 @@ fn init_grid(mode: u8) -> FieldInfo {
         }
     }
 
-    FieldInfo{x,y,mines,field,flagged,visible,}
+    FieldInfo {
+        x,
+        y,
+        mines,
+        field,
+        flagged,
+        visible,
+    }
 }
 
 fn game_loop(info: &mut FieldInfo) -> bool {
@@ -192,24 +208,29 @@ fn game_loop(info: &mut FieldInfo) -> bool {
         let command = user_input.chars().next().unwrap();
         let y = user_input.chars().nth(1).unwrap().to_digit(10).unwrap() as i32;
         let x = user_input.chars().nth(3).unwrap().to_digit(10).unwrap() as i32;
+        let i = (y * info.y + x) as usize;
 
+        // elaborate command
         if command == 'v' {
-            info.visible[(y * info.y + x) as usize] = true;
-        }
-        if command == 'f' {
-            if info.flagged[(y * info.y + x) as usize] {
-                info.flagged[(y * info.y + x) as usize] = false;
-            } else {
-                info.flagged[(y * info.y + x) as usize] = true;
+            if info.field[i] != 0 {
+                info.visible[i] = true;
             }
+        } else if command == 'f' {
+            if info.flagged[i] {
+                info.flagged[i] = false;
+            } else {
+                info.flagged[i] = true;
+            }
+        }
+
+        if info.field[i] == 0 {
+            view_blanck_cell(info, x, y);
         }
 
         // check loss
-        for i in 0..info.mines {
-            if info.field[(y * info.y + x) as usize] == -1 && info.visible[i as usize] {
-                print_grid(&info);
-                return false;
-            }
+        if info.field[i] == -1 && info.visible[i] {
+            print_grid(&info);
+            return false;
         }
 
         // check win
@@ -219,8 +240,56 @@ fn game_loop(info: &mut FieldInfo) -> bool {
                 c += 1;
             }
         }
-        if c == info.field.len() - 10 {
+        if c == info.field.len() as i32 - info.mines {
+            print_grid(&info);
             return true;
+        }
+    }
+}
+
+fn view_blanck_cell(info: &mut FieldInfo, x: i32, y: i32) {
+    let i = (y * info.y + x) as usize;
+    info.visible[i] = true;
+    if info.field[i] == 0 {
+        if x + 1 < info.x {
+            if !info.visible[i + 1] {
+                view_blanck_cell(info, x + 1, y);
+            }
+        }
+        if x - 1 > 0 {
+            if !info.visible[i - 1] {
+                view_blanck_cell(info, x - 1, y);
+            }
+        }
+        if y + 1 < info.y {
+            if !info.visible[i + (info.x as usize)] {
+                view_blanck_cell(info, x, y + 1);
+            }
+        }
+        if y - 1 > 0 {
+            if !info.visible[i - (info.x as usize)] {
+                view_blanck_cell(info, x, y - 1);
+            }
+        }
+        if y - 1 > 0 && x + 1 < info.x {
+            if !info.visible[i + 1 - (info.x as usize)] {
+                view_blanck_cell(info, x + 1, y - 1);
+            }
+        }
+        if y - 1 > 0 && x - 1 > 0 {
+            if !info.visible[i - 1 - (info.x as usize)] {
+                view_blanck_cell(info, x - 1, y - 1);
+            }
+        }
+        if y + 1 < info.y && x + 1 < info.x {
+            if !info.visible[i + 1 + (info.x as usize)] {
+                view_blanck_cell(info, x + 1, y + 1);
+            }
+        }
+        if y + 1 < info.y && x - 1 > 0 {
+            if !info.visible[i - 1 + (info.x as usize)] {
+                view_blanck_cell(info, x - 1, y + 1);
+            }
         }
     }
 }
