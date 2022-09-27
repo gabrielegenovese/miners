@@ -1,6 +1,8 @@
 use colored::Colorize;
+use eyre::{eyre, Result};
 use rand::Rng;
 use std::io;
+use std::num::ParseIntError;
 use std::process::exit;
 
 pub struct FieldInfo {
@@ -199,32 +201,51 @@ fn init_grid(mode: u8) -> FieldInfo {
 
 fn game_loop(info: &mut FieldInfo) -> bool {
     loop {
-        let mut user_input = String::new();
         print_grid(&info);
 
-        io::stdin().read_line(&mut user_input).expect("Errore :(");
+        let mut user_input;
+        let mut command = "";
+        let mut coords = vec![];
+        let mut is_correct = false;
 
         // get the user command
-        let command = user_input.chars().next().unwrap();
-        let y = user_input.chars().nth(1).unwrap().to_digit(10).unwrap() as i32;
-        let x = user_input.chars().nth(3).unwrap().to_digit(10).unwrap() as i32;
+        while !is_correct {
+            user_input = "".to_string();
+
+            io::stdin().read_line(&mut user_input).expect("Errore :(");
+
+            command = user_input.get(0..1).expect("Errore"); // f / v
+
+            let tmp: Result<Vec<i32>> = user_input[1..]
+                .split(",")
+                .map(|x| x.trim().parse().map_err(|e: ParseIntError| eyre!(e)))
+                .collect();
+            if let Ok(c) = tmp {
+                coords = c;
+                is_correct = true;
+            }
+        }
+
+        let y = coords[0];
+        let x = coords[1];
+
         let i = (y * info.y + x) as usize;
 
+        print!("{}", command);
+
         // elaborate command
-        if command == 'v' {
+        if command == "v" {
             if info.field[i] != 0 {
                 info.visible[i] = true;
+            } else {
+                view_blanck_cell(info, x, y);
             }
-        } else if command == 'f' {
+        } else if command == "f" {
             if info.flagged[i] {
                 info.flagged[i] = false;
             } else {
                 info.flagged[i] = true;
             }
-        }
-
-        if info.field[i] == 0 {
-            view_blanck_cell(info, x, y);
         }
 
         // check loss
@@ -256,7 +277,7 @@ fn view_blanck_cell(info: &mut FieldInfo, x: i32, y: i32) {
                 view_blanck_cell(info, x + 1, y);
             }
         }
-        if x - 1 > 0 {
+        if x - 1 >= 0 {
             if !info.visible[i - 1] {
                 view_blanck_cell(info, x - 1, y);
             }
@@ -266,17 +287,17 @@ fn view_blanck_cell(info: &mut FieldInfo, x: i32, y: i32) {
                 view_blanck_cell(info, x, y + 1);
             }
         }
-        if y - 1 > 0 {
+        if y - 1 >= 0 {
             if !info.visible[i - (info.x as usize)] {
                 view_blanck_cell(info, x, y - 1);
             }
         }
-        if y - 1 > 0 && x + 1 < info.x {
+        if y - 1 >= 0 && x + 1 < info.x {
             if !info.visible[i + 1 - (info.x as usize)] {
                 view_blanck_cell(info, x + 1, y - 1);
             }
         }
-        if y - 1 > 0 && x - 1 > 0 {
+        if y - 1 >= 0 && x - 1 >= 0 {
             if !info.visible[i - 1 - (info.x as usize)] {
                 view_blanck_cell(info, x - 1, y - 1);
             }
@@ -286,7 +307,7 @@ fn view_blanck_cell(info: &mut FieldInfo, x: i32, y: i32) {
                 view_blanck_cell(info, x + 1, y + 1);
             }
         }
-        if y + 1 < info.y && x - 1 > 0 {
+        if y + 1 < info.y && x - 1 >= 0 {
             if !info.visible[i - 1 + (info.x as usize)] {
                 view_blanck_cell(info, x - 1, y + 1);
             }
